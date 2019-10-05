@@ -3,10 +3,10 @@
 class MigrationUtil
 {
     private $encryptionUtil,
-            $encryptionLegacyUtil,
-            $oldDbUtil,
-            $newDbUtil,
-            $rpc;
+        $encryptionLegacyUtil,
+        $oldDbUtil,
+        $newDbUtil,
+        $rpc;
 
     public function __construct()
     {
@@ -22,15 +22,29 @@ class MigrationUtil
         $this->newDbUtil = new DBClass(
             NEW_DB_USER,
             NEW_DB_PASSWORD,
-            NEW_DB_HOST,
-            $this->encryptionUtil
+            NEW_DB_HOST
         );
-
+//null//$this->encryptionUtil
         $this->rpc = new RPC();
     }
 
-    public function run() {
+    public function clear()
+    {
+        $tables = array(
+            USERS_TABLE,
+            TRANSACTIONS_TABLE
+        );
+        foreach ($tables as $table) {
+            $this->newDbUtil->clearTable($table);
+        }
+    }
+
+    public function run()
+    {
         $legacyUsers = $this->oldDbUtil->getRows(USERS_TABLE);
+        $isExistList = array();
+        $allBalances = 0;
+        $numberOfAdded = 0;
 
         foreach ($legacyUsers as $oldUser) {
             $calculatedBalance = 0;
@@ -39,71 +53,120 @@ class MigrationUtil
             $stakeBalance = $this->getStakeAmount($oldUser);
 
             $newUser = array(
-                  "email" => $email,
-                  "password" => $oldUser["password"],
-                  "salt" => $oldUser["salt"],
-                  "confirm_code" => $oldUser["confirmcode"],
-                  "tfa_status" => (($oldUser["2fa"] == "Disabled") ? "n" : "y"),
-                  "secret_key" => $oldUser["secretKey"],
-                  "received" => (((float) $balance) + ((float) $stakeBalance))*1e8,
-                  "reset_code" => "n",
-                  "received_by_yobit_codes" => "0",
-                  "withdrawn" => "0"
+                "email" => $email,
+                "password" => $oldUser["password"],
+                "salt" => $oldUser["salt"],
+                "confirm_code" => $oldUser["confirmcode"],
+                "tfa_status" => (($oldUser["2fa"] == "Disabled") ? "n" : "y"),
+                "secret_key" => $oldUser["secretKey"],
+                "received" => (((float)$balance) + ((float)$stakeBalance)) * 1e8,
+                "reset_code" => "n",
+                "withdrawn" => "0"
             );
-            $this->newDbUtil->insert(USERS_TABLE, $newUser);
 
+            if (!$this->newDbUtil->isExist(USERS_TABLE, "email", $email)) {
+                $this->newDbUtil->insert(USERS_TABLE, $newUser);
+                $numberOfAdded++;
+            } else {
+                array_push($isExistList, $email);
+            }
             $txList = ($this->getTransactions($email));
+
             foreach ($txList as $tx) {
-                $txId = $tx['txid'];
-                $txData = $this->rpc->getTransaction($txId);
-                $fromAddress = $txData['vout'][0]['scriptPubKey']['addresses'][0];
-                if(!isset($fromAddress)) {
-                    $fromAddress = "N/A";
+                $time = $tx["time"];
+                $type = $this->getTxType($tx["category"]);
+                $fromAddress = "N/A";
+                $amount = $tx["amount"] * 1e8;
+                $txId = NULL;
+                $toAddress = NULL;
+                $account = $tx['account'];
+
+                if ($type == TX_MOVED) {
+                    $otherAccount = $tx['otheraccount'];
+                    if (compare($otherAccount, "interestsstorage")) {
+                        $type = TX_MINED;
+                    }
+                    $isNegative = ($amount < 0);
+                    $fromAddress = $isNegative ? $email : $otherAccount;
+                    $toAddress = $isNegative ? $otherAccount : $email;
+                    $txId = sha1($amount . $type . $email . $account . $time . $toAddress . $fromAddress);
+                } else {
+                    $txId = $tx['txid'];
+                    $toAddress = $tx["address"];
+                    if ($type == TX_RECEIVED) {
+                        $txData = $this->rpc->getTransaction($txId);
+                        $fromAddress = $txData['vout'][0]['scriptPubKey']['addresses'][0] ?? "N/A";
+                    }
                 }
 
-                $amount = $tx["amount"]*1e8;
                 $calculatedBalance += $amount;
-
                 $item = array(
                     "amount" => $amount,
-                    "time" => $tx["time"],
-                    "timereceived" => $tx["timereceived"],
+                    "time" => $time,
                     "email" => $email,
-                    "type" => TX_RECEIVED,
-                    "txid" => $tx["txid"],
-                    "blockhash" => "",
+                    "type" => $type,
+                    "txid" => sha1($txId . $account),
+                    "blockhash" => $tx['blockhash'] ?? NULL,
                     "ticker" => TICKER,
                     "from_address" => $fromAddress,
-                    "to_address" => $tx["address"],
+                    "to_address" => $toAddress,
                     "status" => TX_CONFIRMED
                 );
                 $this->newDbUtil->insert(TRANSACTIONS_TABLE, $item);
             }
-            print_r(array("email" => $email, "balance" => $balance, "calc_balance" => $calculatedBalance));
+            $allBalances += $balance;
+            if(($balance != 0 || $calculatedBalance != 0) && $balance >= 1) {
+                print_r(array("email" => $email, "balance" => $balance, "calc_balance" => $calculatedBalance / 1e8));
+            }
         }
+        print_r("Added: $numberOfAdded\n");
+        print_r("Balances: $allBalances\n");
+        print_r("BAD: isExist = ".count($isExistList)."\n");
+        print_r($isExistList);
     }
 
-    private function getBalance($email) {
+    private function getTxType($category)
+    {
+        $type = TX_UNKNOWN;
+        switch ($category) {
+            case "send":
+                $type = TX_SENT;
+                break;
+            case "move":
+                $type = TX_MOVED;
+                break;
+            case "receive":
+                $type = TX_RECEIVED;
+                break;
+        }
+        return $type;
+    }
+
+    private function getBalance($email)
+    {
         return $this->rpc->getBalance($email);
     }
 
-    private function calculateStakeAmount($sql_stAmount, $sql_stTime) {
+    private function calculateStakeAmount($sql_stAmount, $sql_stTime)
+    {
         $cTime = time();
         $seTime = $cTime - $sql_stTime;
-        $newAmount = (((float)$sql_stAmount)/100*5/365/24/60/60*($seTime));
+        $newAmount = (((float)$sql_stAmount) / 100 * 5 / 365 / 24 / 60 / 60 * ($seTime));
         return $newAmount;
     }
 
-    private function getStakeAmount($oldUser) {
+    private function getStakeAmount($oldUser)
+    {
         $sql_stAmount = $oldUser["stakeAmount"];
         $sql_stTime = $oldUser["stakeTime"];
-        if((strcasecmp($sql_stAmount, "NULL") != 0) && (strcasecmp($sql_stTime, "NULL") != 0) && is_numeric($sql_stAmount)) {
+        if ((strcasecmp($sql_stAmount, "NULL") != 0) && (strcasecmp($sql_stTime, "NULL") != 0) && is_numeric($sql_stAmount)) {
             return ($sql_stAmount + $this->calculateStakeAmount($sql_stAmount, $sql_stTime));
         }
         return 0;
     }
 
-    private function getTransactions($email) {
+    private function getTransactions($email)
+    {
         return $this->rpc->getListTransactionsByEmail($email);
     }
 }

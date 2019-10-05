@@ -14,4 +14,5 @@ require_once ('MigrationUtil.php');
 (PHP_SAPI !== 'cli' || isset($_SERVER['HTTP_USER_AGENT'])) && die('cli only');
 
 $util = new MigrationUtil();
+$util->clear();
 $util->run();

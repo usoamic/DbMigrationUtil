@@ -11,6 +11,8 @@ const TX_REJECTED = 3;
  */
 const TX_ALL = 1;
 const TX_SENT = 2;
-const TX_RECEIVED = 3;
-const TX_YOBIT_CODE = 4;
+const TX_MOVED = 3;
+const TX_MINED = 4;
+const TX_RECEIVED = 5;
+const TX_UNKNOWN = 6;
 ?>

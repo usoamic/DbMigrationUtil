@@ -14,34 +14,20 @@ class DBClass {
         $db_user,
         $db_password,
         $db_host,
-        IEncryptionUtil $encryptionUtil
+        IEncryptionUtil $encryptionUtil = null
     ) {
         $this->dbUser = $db_user;
         $this->dbPassword = $db_password;
         $this->dbHost = $db_host;
-        $this->encryptionUtil = $encryptionUtil;
+        if($encryptionUtil != null) {
+            $this->encryptionUtil = $encryptionUtil;
+        }
         $this->connect();
     }
 
-    private function dbEncryption() {
-        return ($this->encryptionUtil != null);
-    }
-
-    private function dbLog($err = null) { }
-
-    private function error($err = null) {
-        if($err != null) {
-            $this->dbLog($err);
-        }
-        die_redirect("DATABASE_ERROR");
-    }
-
-    private function connect() {
-        try {
-            $this->connection = new PDO('mysql:host='.$this->dbHost.';dbname='.$this->dbUser, $this->dbUser, $this->dbPassword);
-        } catch (PDOException $e) {
-            $this->error($e->getMessage());
-        }
+    public function isExist($table, $cond_key = "", $cond_value = "") {
+        $result = $this->getRows($table, $cond_key, $cond_value);
+        return (count($result) > 0);
     }
 
     public function getRows($table, $cond_key = "", $cond_value = "", $columns = "*", $all = true) {
@@ -78,11 +64,16 @@ class DBClass {
         $this->connect();
         try {
             if(!$this->connection->query($insert_query)) {
-                $this->error();
+                $this->error("Unable to make a query: ".$insert_query);
             }
         } catch (PDOException $e) {
             $this->error($e->getMessage());
         }
+    }
+
+    public function clearTable($table) {
+        $sql = 'TRUNCATE '.$table;
+        $this->query($sql);
     }
 
     public function insert($table, $values) {
@@ -97,6 +88,22 @@ class DBClass {
     /*
      * Private
      */
+    private function dbEncryption() {
+        return ($this->encryptionUtil != null);
+    }
+
+    private function error($err = null) {
+        die_redirect($err ?? "DATABASE_ERROR");
+    }
+
+    private function connect() {
+        try {
+            $this->connection = new PDO('mysql:host='.$this->dbHost.';dbname='.$this->dbUser, $this->dbUser, $this->dbPassword);
+        } catch (PDOException $e) {
+            $this->error($e->getMessage());
+        }
+    }
+
     private function getSign(&$key) {
         $sign = "=";
         $signArr = array(">", "<");

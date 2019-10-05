@@ -1,7 +1,7 @@
 <?php
 require_once ("defs.php");
 
-const TICKER = TICKER;
+const TICKER = _TICKER;
 /**
  * RPC
  */

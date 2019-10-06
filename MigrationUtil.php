@@ -6,12 +6,14 @@ class MigrationUtil
         $encryptionLegacyUtil,
         $oldDbUtil,
         $newDbUtil,
-        $rpc;
+        $rpc,
+        $gAuth;
 
     public function __construct()
     {
         $this->encryptionUtil = new EncryptionUtil();
         $this->encryptionLegacyUtil = new EncryptionLegacyUtil();
+        $this->gAuth = new GoogleAuthenticator();
         $this->oldDbUtil = new DBClass(
             OLD_DB_USER,
             OLD_DB_PASSWORD,
@@ -51,6 +53,11 @@ class MigrationUtil
             $email = $oldUser["email"];
             $balance = $this->getBalance($email);
             $stakeBalance = $this->getStakeAmount($oldUser);
+            $secretKey = $oldUser["secretKey"];
+
+            if($secretKey == NULL || $secretKey == "NULL") {
+                $secretKey = $this->gAuth->generateSecret();
+            }
 
             $newUser = array(
                 "email" => $email,
@@ -58,7 +65,7 @@ class MigrationUtil
                 "salt" => $oldUser["salt"],
                 "confirm_code" => $oldUser["confirmcode"],
                 "tfa_status" => (($oldUser["2fa"] == "Disabled") ? "n" : "y"),
-                "secret_key" => $oldUser["secretKey"],
+                "secret_key" => $secretKey,
                 "received" => (((float)$balance) + ((float)$stakeBalance)) * 1e8,
                 "reset_code" => "n",
                 "withdrawn" => "0"

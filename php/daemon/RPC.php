@@ -29,11 +29,11 @@ class RPC {
         return $this->client->getbalance($email);
     }
 
-    public function getListTransactionsByEmail($email) {
-        return $this->client->listtransactions($email);
+    public function getListTransactionsByEmail($email, $limit = 10000) {
+        return $this->client->listtransactions($email, $limit);
     }
 
     public function getListTransactions() {
-        return $this->client->listtransactions();
+        return $this->client->listtransactiolsns();
     }
 }

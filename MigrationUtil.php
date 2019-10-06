@@ -89,9 +89,10 @@ class MigrationUtil
                     $isNegative = ($amount < 0);
                     $fromAddress = $isNegative ? $email : $otherAccount;
                     $toAddress = $isNegative ? $otherAccount : $email;
-                    $txId = sha1($amount . $type . $email . $account . $time . $toAddress . $fromAddress);
+                    $uniqId = sha1($amount.$type.$email.$account.$time.$toAddress.$fromAddress);
                 } else {
                     $txId = $tx['txid'];
+                    $uniqId = sha1($amount.$txId.$type.$email.$account.$time.$toAddress.$fromAddress);
                     $toAddress = $tx["address"];
                     if ($type == TX_RECEIVED) {
                         $txData = $this->rpc->getTransaction($txId);
@@ -105,7 +106,8 @@ class MigrationUtil
                     "time" => $time,
                     "email" => $email,
                     "type" => $type,
-                    "txid" => sha1($txId . $account),
+                    "txid" => $txId,
+                    "uniqid" => $uniqId,
                     "blockhash" => $tx['blockhash'] ?? NULL,
                     "ticker" => TICKER,
                     "from_address" => $fromAddress,

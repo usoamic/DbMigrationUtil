@@ -43,6 +43,7 @@ CREATE TABLE `transactions` (
   `email` varchar(512) NOT NULL,
   `type` varchar(512) NOT NULL,
   `txid` varchar(512) DEFAULT NULL,
+  `uniqid` varchar(512) DEFAULT NULL,
   `blockhash` varchar(512) DEFAULT NULL,
   `ticker` varchar(512) NOT NULL,
   `from_address` varchar(512) NOT NULL,
@@ -100,7 +101,7 @@ ALTER TABLE `login_history`
 --
 ALTER TABLE `transactions`
   ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `txid` (`txid`);
+  ADD UNIQUE KEY `uniqid` (`uniqid`);
 
 --
 -- Indexes for table `users`

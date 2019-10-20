@@ -2,7 +2,6 @@
 class EncryptionUtil extends EncryptionBase implements IEncryptionUtil
 {
     private
-        $rand_key,
         $encryptionSalt,
         $encryptMethod,
         $iv;
@@ -12,13 +11,11 @@ class EncryptionUtil extends EncryptionBase implements IEncryptionUtil
      */
     public function __construct(
         $method = NEW_ENCRYPTION_METHOD,
-        $rand_key = NEW_ENCRYPTION_RANDOM_KEY,
         $salt = NEW_ENCRYPTION_SALT,
         $iv = NEW_ENCRYPTION_IV,
         $exceptions = NEW_ENCRYPTION_EXCEPTIONS
     )
     {
-        $this->rand_key = $rand_key;
         $this->encryptionSalt = $salt;
         $this->encryptMethod = $method;
         $this->iv = $iv;

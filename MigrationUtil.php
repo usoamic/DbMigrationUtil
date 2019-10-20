@@ -24,7 +24,8 @@ class MigrationUtil
         $this->newDbUtil = new DBClass(
             NEW_DB_USER,
             NEW_DB_PASSWORD,
-            NEW_DB_HOST
+            NEW_DB_HOST,
+            $this->encryptionUtil
         );
 //null//$this->encryptionUtil
         $this->rpc = new RPC();

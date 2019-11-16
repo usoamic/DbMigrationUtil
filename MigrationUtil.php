@@ -52,9 +52,14 @@ class MigrationUtil
         foreach ($legacyUsers as $oldUser) {
             $calculatedBalance = 0;
             $email = $oldUser["email"];
-            $balance = $this->getBalance($email);
             $stakeBalance = $this->getStakeAmount($oldUser);
+            if(!$this->rpc->move(STAKING_ACCOUNT, $email, $stakeBalance*1e8)) {
+                throw new Exception("Move coins");
+            }
+            $balance = $this->getBalance($email);
+
             $secretKey = $oldUser["secretKey"];
+
 
             if($secretKey == NULL || $secretKey == "NULL") {
                 $secretKey = $this->gAuth->generateSecret();
@@ -67,7 +72,7 @@ class MigrationUtil
                 "confirm_code" => $oldUser["confirmcode"],
                 "tfa_status" => (($oldUser["2fa"] == "Disabled") ? "n" : "y"),
                 "secret_key" => $secretKey,
-                "received" => (((float)$balance) + ((float)$stakeBalance)) * 1e8,
+                "received" => (((float)$balance)) * 1e8,
                 "reset_code" => "n",
                 "withdrawn" => "0"
             );

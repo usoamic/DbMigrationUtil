@@ -36,4 +36,8 @@ class RPC {
     public function getListTransactions() {
         return $this->client->listtransactiolsns();
     }
+
+    public function move($from, $to, $amount) {
+        return $this->client->sendfrom($from, $to, $amount);
+    }
 }

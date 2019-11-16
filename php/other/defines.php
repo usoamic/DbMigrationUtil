@@ -2,6 +2,8 @@
 require_once ("defs.php");
 
 const TICKER = _TICKER;
+const STAKING_ACCOUNT = _STAKING_ACCOUNT;
+
 /**
  * RPC
  */

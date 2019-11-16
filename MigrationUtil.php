@@ -129,7 +129,7 @@ class MigrationUtil
             }
             $allBalances += $balance;
             if(($balance != 0 || $calculatedBalance != 0) && $balance >= 1) {
-                print_r(array("email" => $email, "balance" => $balance, "calc_balance" => $calculatedBalance / 1e8));
+                print_r(array("email" => $email, "balance" => $balance, "calc_balance" => $calculatedBalance / 1e8, "stakeBalance" => $stakeBalance));
             }
         }
         print_r("Added: $numberOfAdded\n");

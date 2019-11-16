@@ -42,6 +42,16 @@ class MigrationUtil
         }
     }
 
+    public function foreach() {
+        $accounts = $this->rpc->getAccounts();
+        foreach ($accounts as $email => $balance) {
+            if($balance > 1 && strpos($email, '@') !== false) {
+                print_r($balance);
+            }
+        }
+
+    }
+
     public function run()
     {
         $legacyUsers = $this->oldDbUtil->getRows(USERS_TABLE);
@@ -53,8 +63,10 @@ class MigrationUtil
             $calculatedBalance = 0;
             $email = $oldUser["email"];
             $stakeBalance = $this->getStakeAmount($oldUser);
-            if(!$this->rpc->move(STAKING_ACCOUNT, $email, $stakeBalance*1e8)) {
-                throw new Exception("Move coins");
+            if($stakeBalance > 0) {
+                if (!$this->rpc->move(STAKING_ACCOUNT, $email, $stakeBalance)) {
+                    throw new Exception("Move coins");
+                }
             }
             $balance = $this->getBalance($email);
 
@@ -85,7 +97,8 @@ class MigrationUtil
             }
             $txList = ($this->getTransactions($email));
 
-            foreach ($txList as $tx) {
+
+            foreach ($txList as $i => $tx) {
                 $time = $tx["time"];
                 $type = $this->getTxType($tx["category"]);
                 $fromAddress = "N/A";
@@ -102,11 +115,11 @@ class MigrationUtil
                     $isNegative = ($amount < 0);
                     $fromAddress = $isNegative ? $email : $otherAccount;
                     $toAddress = $isNegative ? $otherAccount : $email;
-                    $uniqId = sha1($amount.$type.$email.$account.$time.$toAddress.$fromAddress);
+                    $uniqId = sha1($amount.$type.$email.$account.$time.$toAddress.$fromAddress.$i);
                 } else {
                     $txId = $tx['txid'];
-                    $uniqId = sha1($amount.$txId.$type.$email.$account.$time.$toAddress.$fromAddress);
                     $toAddress = $tx["address"];
+                    $uniqId = sha1($amount.$txId.$type.$email.$account.$time.$toAddress.$fromAddress);
                     if ($type == TX_RECEIVED) {
                         $txData = $this->rpc->getTransaction($txId);
                         $fromAddress = (isset($txData['vout'][0]['scriptPubKey']['addresses'][0])) ? $txData['vout'][0]['scriptPubKey']['addresses'][0] : NULL;

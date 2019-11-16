@@ -18,7 +18,7 @@ class MigrationUtil
             OLD_DB_USER,
             OLD_DB_PASSWORD,
             OLD_DB_HOST,
-            $this->encryptionLegacyUtil
+            ((OLD_ENCRYPTION_ENABLED) ? $this->encryptionLegacyUtil : NULL)
         );
 
         $this->newDbUtil = new DBClass(

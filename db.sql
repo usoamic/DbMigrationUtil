@@ -43,7 +43,7 @@ CREATE TABLE `transactions` (
   `email` varchar(512) NOT NULL,
   `type` varchar(512) NOT NULL,
   `txid` varchar(512) DEFAULT NULL,
-  `uniqid` varchar(512) DEFAULT NULL,
+  `uniqid` varchar(128) DEFAULT NULL,
   `blockhash` varchar(512) DEFAULT NULL,
   `ticker` varchar(512) NOT NULL,
   `from_address` varchar(512) NOT NULL,

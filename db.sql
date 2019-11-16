@@ -23,7 +23,7 @@ SET time_zone = "+00:00";
 
 CREATE TABLE `login_history` (
   `id` int(11) NOT NULL,
-  `email` varchar(512) NOT NULL,
+  `email` varchar(50) NOT NULL,
   `ip_address` varchar(512) NOT NULL,
   `timestamp` varchar(512) NOT NULL,
   `browser` varchar(512) NOT NULL,
@@ -40,7 +40,7 @@ CREATE TABLE `transactions` (
   `id` int(11) NOT NULL,
   `amount` varchar(512) NOT NULL,
   `time` varchar(512) NOT NULL,
-  `email` varchar(512) NOT NULL,
+  `email` varchar(50) NOT NULL,
   `type` varchar(512) NOT NULL,
   `txid` varchar(512) DEFAULT NULL,
   `uniqid` varchar(128) DEFAULT NULL,
@@ -59,7 +59,7 @@ CREATE TABLE `transactions` (
 
 CREATE TABLE `users` (
   `id` int(11) NOT NULL,
-  `email` varchar(512) NOT NULL,
+  `email` varchar(50) NOT NULL,
   `password` varchar(512) NOT NULL,
   `confirm_code` varchar(512) NOT NULL,
   `tfa_status` varchar(512) NOT NULL,
@@ -82,7 +82,7 @@ CREATE TABLE `withdrawals` (
   `address` varchar(512) NOT NULL,
   `time` varchar(512) NOT NULL,
   `status` varchar(512) NOT NULL,
-  `email` varchar(512) NOT NULL,
+  `email` varchar(50) NOT NULL,
   `type` varchar(512) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 

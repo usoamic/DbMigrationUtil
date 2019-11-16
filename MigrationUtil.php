@@ -104,7 +104,10 @@ class MigrationUtil
                     $toAddress = $tx["address"];
                     if ($type == TX_RECEIVED) {
                         $txData = $this->rpc->getTransaction($txId);
-                        $fromAddress = $txData['vout'][0]['scriptPubKey']['addresses'][0] ?? "N/A";
+                        $fromAddress = (isset($txData['vout'][0]['scriptPubKey']['addresses'][0])) ? $txData['vout'][0]['scriptPubKey']['addresses'][0] : NULL;
+                        if($fromAddress == NULL) {
+                            $fromAddress = "N/A";
+                        }
                     }
                 }
 
@@ -116,7 +119,7 @@ class MigrationUtil
                     "type" => $type,
                     "txid" => $txId,
                     "uniqid" => $uniqId,
-                    "blockhash" => $tx['blockhash'] ?? NULL,
+                    "blockhash" => (isset($tx['blockhash']) ? $tx['blockhash'] : NULL),
                     "ticker" => TICKER,
                     "from_address" => $fromAddress,
                     "to_address" => $toAddress,

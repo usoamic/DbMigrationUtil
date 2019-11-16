@@ -93,7 +93,7 @@ class DBClass {
     }
 
     private function error($err = null) {
-        die_redirect($err ?? "DATABASE_ERROR");
+        die_redirect(($err == null) ? "DATABASE_ERROR" : $err);
     }
 
     private function connect() {
